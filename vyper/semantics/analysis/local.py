@@ -691,7 +691,10 @@ class ExprVisitor(VyperNodeVisitorBase):
                         msg = "Cannot modify loop variable"
                         var = s.variable
                         if var.decl_node is not None:
-                            msg += f" `{var.decl_node.target.id}`"
+                            if isinstance(var.decl_node, vy_ast.arg):
+                                msg += f" `{var.decl_node.arg}`"
+                            else:
+                                msg += f" `{var.decl_node.target.id}`"
                         raise ImmutableViolation(msg, var.decl_node, node)
 
                 var_accesses = info._writes | info._reads
@@ -995,9 +998,11 @@ def _validate_range_call(node: vy_ast.Call):
             error = "Please remove the `bound=` kwarg when using range with constants"
             raise StructureException(error, bound)
     else:
-        for arg in (start, end):
-            if not isinstance(arg, vy_ast.Int):
-                error = "Value must be a literal integer, unless a bound is specified"
-                raise StructureException(error, arg)
+        error = "Value must be a literal integer, unless a bound is specified"
+        if not isinstance(start, vy_ast.Int):
+            raise StructureException(error, start)
+        if not isinstance(end, vy_ast.Int):
+            raise StructureException(error, end)
+
         if end.value <= start.value:
             raise StructureException("End must be greater than start", end)
