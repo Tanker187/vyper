@@ -19,9 +19,14 @@ jobs:
       (github.event_name == 'pull_request_target' && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association))
     runs-on: ubuntu-latest
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Invalidate existing comment
         if: github.event_name == 'pull_request_target'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const marker = '<!-- bytecode-size-report -->';
@@ -40,7 +45,7 @@ jobs:
             });
 
       - name: Checkout merge commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           path: head
@@ -48,7 +53,7 @@ jobs:
           fetch-tags: true
 
       - name: Checkout base
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.base_ref }}
           path: base
@@ -59,7 +64,7 @@ jobs:
         run: cp -r head/.github/scripts base/.github/
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
@@ -92,7 +97,7 @@ jobs:
 
       - name: Post or update PR comment
         if: github.event_name == 'pull_request_target'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const marker = '<!-- bytecode-size-report -->';
@@ -121,7 +126,7 @@ jobs:
           REPORT: ${{ steps.report.outputs.REPORT }}
 
       - name: Upload size data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: bytecode-sizes
           path: |
